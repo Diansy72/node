@@ -1,33 +1,12 @@
 pipeline {
     agent any
     tools {
-        nodejs 'NodeJS 22.13.1' // Sesuaikan dengan konfigurasi Node.js
+        nodejs 'NodeJS 22.13.1' // Sesuaikan dengan nama Node.js yang dikonfigurasi di Jenkins
     }
     stages {
         stage('Checkout') {
             steps {
-                checkout([$class: 'GitSCM', branches: [[name: 'main']],
-                    doGenerateSubmoduleConfigurations: false, 
-                    extensions: [[$class: 'CloneOption', depth: 1, noTags: false, shallow: true]], 
-                    userRemoteConfigs: [[url: 'https://github.com/Diansy72/node.git']]
-                ])
-            }
-        }
-        stage('Select Random Files') {
-            steps {
-                script {
-                    def randomScript = '''
-                        const fs = require('fs');
-                        const path = require('path');
-
-                        const directory = '.'; // Direktori root repository
-                        const files = fs.readdirSync(directory).filter(file => fs.lstatSync(path.join(directory, file)).isFile());
-                        const randomFiles = files.sort(() => Math.random() - Math.random()).slice(0, 5); // Pilih 5 file secara acak
-                        console.log("Randomly selected files:", randomFiles);
-                    '''
-                    writeFile file: 'select-random.js', text: randomScript
-                    bat 'node select-random.js'
-                }
+                git branch: 'main', url: 'https://github.com/Diansy72/node.git'
             }
         }
         stage('Install Dependencies') {
@@ -41,7 +20,7 @@ pipeline {
             }
             post {
                 success {
-                    junit 'test-results.xml'
+                    junit 'test-results.xml' // Sesuaikan dengan lokasi file hasil tes
                 }
                 failure {
                     echo 'Tests failed!'
@@ -50,12 +29,13 @@ pipeline {
         }
         stage('Build') {
             steps {
-                bat 'npm run build'
+                bat 'npm run build' // Sesuaikan dengan perintah build di proyek Anda
             }
         }
         stage('Deploy') {
             steps {
                 echo 'Deploying to production environment...'
+                // Tambahkan perintah deploy sesuai kebutuhan Anda
             }
         }
     }
