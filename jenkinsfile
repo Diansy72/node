@@ -1,68 +1,26 @@
 pipeline {
     agent any
-
     tools {
-        nodejs 'NodeJS 22.13.1' // Pastikan sesuai dengan konfigurasi Node.js di Jenkins
+        nodejs 'NodeJS 22.13.1' // Sesuaikan dengan nama Node.js yang dikonfigurasi di Jenkins
     }
-
-    environment {
-        GIT_REPO = 'https://github.com/Diansy72/node.git' // Ganti dengan repo yang sesuai
-        GIT_BRANCH = 'main'
-        CREDENTIALS_ID = 'git-credentials' // Jika repo private, ganti dengan ID kredensial Git di Jenkins
-    }
-
     stages {
         stage('Checkout') {
             steps {
-                script {
-                    try {
-                        checkout([
-                            $class: 'GitSCM',
-                            branches: [[name: "*/${GIT_BRANCH}"]],
-                            doGenerateSubmoduleConfigurations: false,
-                            extensions: [[$class: 'CloneOption', depth: 1, noTags: true, shallow: true]], // Menggunakan shallow clone untuk efisiensi
-                            userRemoteConfigs: [[
-                                url: GIT_REPO,
-                                credentialsId: CREDENTIALS_ID // Pastikan sudah disimpan di Jenkins jika repo private
-                            ]]
-                        ])
-                    } catch (err) {
-                        error "Gagal melakukan checkout repository: ${err}"
-                    }
-                }
+                checkout([$class: 'GitSCM', branches: [[name: 'main']],
+                    doGenerateSubmoduleConfigurations: false, 
+                    extensions: [[$class: 'CloneOption', depth: 1, noTags: false, shallow: true, reference: '']], 
+                    submoduleCfg: [], 
+                    userRemoteConfigs: [[url: 'https://github.com/Diansy72/node.git']]])
             }
         }
-
         stage('Install Dependencies') {
             steps {
-                script {
-                    try {
-                        if (isUnix()) {
-                            sh 'npm install'
-                        } else {
-                            bat 'where npm' // Cek apakah npm tersedia
-                            bat 'npm install'
-                        }
-                    } catch (err) {
-                        error "Gagal menginstal dependencies: ${err}"
-                    }
-                }
+                bat 'npm install'
             }
         }
-
         stage('Run Tests') {
             steps {
-                script {
-                    try {
-                        if (isUnix()) {
-                            sh 'npm test'
-                        } else {
-                            bat 'npm test'
-                        }
-                    } catch (err) {
-                        error "Test gagal: ${err}"
-                    }
-                }
+                bat 'npm test'
             }
             post {
                 success {
@@ -73,31 +31,18 @@ pipeline {
                 }
             }
         }
-
         stage('Build') {
             steps {
-                script {
-                    try {
-                        if (isUnix()) {
-                            sh 'npm run build'
-                        } else {
-                            bat 'npm run build'
-                        }
-                    } catch (err) {
-                        error "Build gagal: ${err}"
-                    }
-                }
+                bat 'npm run build' // Sesuaikan dengan perintah build di proyek Anda
             }
         }
-
         stage('Deploy') {
             steps {
                 echo 'Deploying to production environment...'
-                // Tambahkan perintah deploy sesuai kebutuhan
+                // Tambahkan perintah deploy sesuai kebutuhan Anda
             }
         }
     }
-
     post {
         success {
             echo 'Pipeline completed successfully!'
